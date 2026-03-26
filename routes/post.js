@@ -1,6 +1,6 @@
 import { Router } from "express";
 import Post from "../models/Post.js";
-import { authMiddleware } from "../middleware/auth.js";
+import { authMiddleware, authorizeRoles } from "../middleware/auth.js";
 import { body, validationResult } from "express-validator";
 
 const postRouter = Router();
@@ -48,10 +48,15 @@ postRouter.put("/:id", authMiddleware, async (req, res) => {
   res.json(post);
 });
 
-postRouter.delete("/:id", authMiddleware, async (req, res) => {
-  await Post.findByIdAndDelete(req.params.id);
-  res.json({ message: "Post deleted" });
-});
+postRouter.delete(
+  "/:id",
+  authMiddleware,
+  authorizeRoles("admin"),
+  async (req, res) => {
+    await Post.findByIdAndDelete(req.params.id);
+    res.json({ message: "Post deleted" });
+  },
+);
 postRouter.post("/:id/like", authMiddleware, async (req, res) => {
   const post = await Post.findById(req.params.id);
 

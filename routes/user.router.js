@@ -2,14 +2,19 @@ import { Router } from "express";
 import User from "../models/User.js";
 import bcrypt from "bcrypt";
 import { generateToken } from "../utils/jwt.js";
-import { authMiddleware } from "../middleware/auth.js";
+import { authMiddleware, authorizeRoles } from "../middleware/auth.js";
 import { body, query, validationResult } from "express-validator";
 const userRouter = Router();
 
-userRouter.get("/", async (req, res) => {
-  const users = await User.find();
-  res.json(users);
-});
+userRouter.get(
+  "/",
+  authMiddleware,
+  authorizeRoles("admin"),
+  async (req, res) => {
+    const users = await User.find();
+    res.json(users);
+  },
+);
 
 userRouter.post(
   "/register",
@@ -63,10 +68,15 @@ userRouter.put("/:id", authMiddleware, async (req, res) => {
   res.json(user);
 });
 
-userRouter.delete("/:id", authMiddleware, async (req, res) => {
-  await User.findByIdAndDelete(req.params.id);
-  res.json({ message: "User deleted" });
-});
+userRouter.delete(
+  "/:id",
+  authMiddleware,
+  authorizeRoles("admin"),
+  async (req, res) => {
+    await User.findByIdAndDelete(req.params.id);
+    res.json({ message: "User deleted" });
+  },
+);
 userRouter.post("/logout", (req, res) => {
   res.clearCookie("token");
   res.json({ message: "Logged out" });
