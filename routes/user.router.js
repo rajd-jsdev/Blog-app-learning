@@ -13,7 +13,9 @@ userRouter.get("/", async (req, res) => {
 
 userRouter.post(
   "/register",
-  body("age").notEmpty().escape(),
+  body("email").isEmail(),
+  body("password").isLength({ min: 6 }),
+  body("age").isInt({ min: 1 }),
   async (req, res) => {
     const body = req.body;
     const result = validationResult(req);
@@ -21,9 +23,8 @@ userRouter.post(
     if (!result.isEmpty()) {
       return res.send(`enter Age bhai !!!`);
     }
-    const hashed = await bcrypt.hash(body.password, 10);
 
-    const user = await User.create({ ...body, password: hashed });
+    const user = await User.create(body);
 
     res.json(user);
   },
@@ -54,6 +55,18 @@ userRouter.post("/login", async (req, res) => {
   res.json({ message: "Login successful" });
 });
 
+userRouter.put("/:id", authMiddleware, async (req, res) => {
+  const user = await User.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+  });
+
+  res.json(user);
+});
+
+userRouter.delete("/:id", authMiddleware, async (req, res) => {
+  await User.findByIdAndDelete(req.params.id);
+  res.json({ message: "User deleted" });
+});
 userRouter.post("/logout", (req, res) => {
   res.clearCookie("token");
   res.json({ message: "Logged out" });
