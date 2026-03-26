@@ -5,9 +5,11 @@ import userRouter from "./routes/user.router.js";
 import pino, { levels } from "pino";
 import postRouter from "./routes/post.js";
 import commentRouter from "./routes/comment.js";
+import cookieParser from "cookie-parser";
 const app = express();
 const logger = pino({ level: "debug" });
 app.use(express.json());
+app.use(cookieParser());
 app.use((req, res, next) => {
   logger.debug({
     method: req.method,

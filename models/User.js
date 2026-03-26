@@ -10,8 +10,15 @@ const userSchema = new mongoose.Schema({
     type: String,
   },
   password: String,
+  age: {
+    type: Number,
+    required: true,
+    min: 1,
+  },
 });
 
-userSchema.pre("save", (user) => {});
+userSchema.pre("save", function (next) {
+  next();
+});
 const User = mongoose.model("User", userSchema);
 export default User;

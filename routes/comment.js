@@ -1,32 +1,32 @@
 import { Router } from "express";
-import Post from "../models/Post.js";
 import Comment from "../models/Comment.js";
+import { authMiddleware } from "../middleware/auth.js";
+import { buildCommentTree } from "../utils/helper.js";
+
 const commentRouter = Router();
 
 commentRouter.get("/", async (req, res) => {
-  const comment = await Comment.find();
-  return res.json(comment);
+  const comments = await Comment.find().populate("user").populate("post");
+  res.json(comments);
 });
 
-commentRouter.post("/", async (req, res) => {
-  const body = req.body;
+commentRouter.post("/", authMiddleware, async (req, res) => {
+  const comment = await Comment.create({
+    ...req.body,
+    user: req.user.id,
+  });
 
-  const comment = await Comment.create(body);
-
-  return res.json(comment);
+  res.json(comment);
 });
 
-commentRouter.get("/:id", async (req, res) => {
-  const { id } = req.params;
+commentRouter.get("/post/:postId", async (req, res) => {
+  const comments = await Comment.find({ post: req.params.postId })
+    .populate("user", "email")
+    .sort({ createdAt: 1 });
 
-  const comment = await Comment.findById(id);
-  if (!comment) {
-    res.status(403).send("No post found with this mail");
-  }
-  if (comment) {
-    res.send(comment);
-  } else {
-    res.status(400).send("Invalid cred");
-  }
+  const nested = buildCommentTree(comments);
+
+  res.json(nested);
 });
+
 export default commentRouter;
